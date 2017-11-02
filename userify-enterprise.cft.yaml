@@ -132,6 +132,8 @@ Parameters:
       Files stored in this bucket are strongly encrypted, so please
       take note of your crypto seed above.
     Type: String
+    AllowedPattern: "^[a-z0-9-]*$"
+    ConstraintDescription: only lowercase, numbers, and hyphens allowed.
 
   60oooECInstanceType:
     Description: >-
