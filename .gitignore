@@ -1,6 +1,7 @@
 # counter file for testing
 counter
 build.sh
+publish.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
