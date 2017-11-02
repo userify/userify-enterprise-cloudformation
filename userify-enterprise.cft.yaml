@@ -88,22 +88,22 @@ Parameters:
       - m3.medium
       - m3.large
       - m3.xlarge
-      - m3.2ooolarge
+      - m3.2xlarge
       - m4.large
       - m4.xlarge
-      - m4.2ooolarge
-      - m4.4ooolarge
-      - m4.10ooolarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
       - c3.large
       - c3.xlarge
-      - c3.2ooolarge
-      - c3.4ooolarge
-      - c3.8ooolarge
+      - c3.2xlarge
+      - c3.4xlarge
+      - c3.8xlarge
       - c4.large
       - c4.xlarge
-      - c4.2ooolarge
-      - c4.4ooolarge
-      - c4.8ooolarge
+      - c4.2xlarge
+      - c4.4xlarge
+      - c4.8xlarge
     ConstraintDescription: Please select be a valid EC2 instance type.
 
   20oooClusterMinSize:
@@ -149,12 +149,12 @@ Parameters:
       - cache.m3.medium
       - cache.m3.large
       - cache.m3.xlarge
-      - cache.m3.2ooolarge
+      - cache.m3.2xlarge
       - cache.r3.large
       - cache.r3.xlarge
-      - cache.r3.2ooolarge
-      - cache.r3.4ooolarge
-      - cache.r3.8ooolarge
+      - cache.r3.2xlarge
+      - cache.r3.4xlarge
+      - cache.r3.8xlarge
     ConstraintDescription: Please select a valid Cache Node type.
 
   70oooSSHKeyName:
@@ -194,37 +194,37 @@ Mappings:
       Arch: HVM64
     m3.xlarge:
       Arch: HVM64
-    m3.2ooolarge:
+    m3.2xlarge:
       Arch: HVM64
     m4.large:
       Arch: HVM64
     m4.xlarge:
       Arch: HVM64
-    m4.2ooolarge:
+    m4.2xlarge:
       Arch: HVM64
-    m4.4ooolarge:
+    m4.4xlarge:
       Arch: HVM64
-    m4.10ooolarge:
+    m4.10xlarge:
       Arch: HVM64
     c3.large:
       Arch: HVM64
     c3.xlarge:
       Arch: HVM64
-    c3.2ooolarge:
+    c3.2xlarge:
       Arch: HVM64
-    c3.4ooolarge:
+    c3.4xlarge:
       Arch: HVM64
-    c3.8ooolarge:
+    c3.8xlarge:
       Arch: HVM64
     c4.large:
       Arch: HVM64
     c4.xlarge:
       Arch: HVM64
-    c4.2ooolarge:
+    c4.2xlarge:
       Arch: HVM64
-    c4.4ooolarge:
+    c4.4xlarge:
       Arch: HVM64
-    c4.8ooolarge:
+    c4.8xlarge:
       Arch: HVM64
 
   AWSRegionArch2AMI:
