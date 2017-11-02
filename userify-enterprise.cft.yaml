@@ -136,12 +136,14 @@ Parameters:
   60oooECInstanceType:
     Description: >-
       Instance type for the Elasticache cluster used by Userify Enterprise.
-      The default, cache.m3.medium, is recommended for up to 1000 managed instances
+      The default, cache.m3.large, is recommended for up to 1,500 managed instances
       and is the smallest that can be used in a Replication Group (recommended).
       Typically, this resource is lightly used even with very fast poll times.
       Small deployments (<200 instances) may be even fine with t2 class instances.
+      Not all regions and accounts support cache.m3.medium, but it's recommended
+      for up to 1,000 managed instances.
     Type: String
-    Default: cache.m3.medium
+    Default: cache.m3.large
     AllowedValues:
       - cache.t2.micro
       - cache.t2.small
