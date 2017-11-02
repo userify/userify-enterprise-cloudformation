@@ -131,6 +131,7 @@ Parameters:
       Userify S3 Bucket Name for primary datastore.
       Files stored in this bucket are strongly encrypted, so please
       take note of your crypto seed above.
+      Only lowercase, numbers, and hyphens allowed.
     Type: String
     AllowedPattern: "^[a-z0-9-]*$"
     ConstraintDescription: only lowercase, numbers, and hyphens allowed.
