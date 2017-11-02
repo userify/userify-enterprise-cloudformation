@@ -1,0 +1,770 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+
+Description: >-
+
+  Welcome to the AWS CloudFormation template for Userify Enterprise. This
+  template will create and configure an entire Userify Enterprise cluster. Please
+  read the directions carefully and contact support@userify.com if you have
+  questions.
+
+  After the stack has completed, you will be able to configure your
+  Userify Enterprise cluster using an easy-to-use web-based dashboard.
+  If you are planning to utilize Active Directory or LDAP, you should
+  click "Server Configuration" and configure it before creating your
+  first user.
+
+  When the stack has completed, the URL of the new stack will be shown
+  under "Outputs". Don't forget to safely record your cluster password
+  and crypto seed.
+
+
+Parameters:
+
+  01oooClusterAdminUsername:
+      Description: >-
+          Please provide a username that you will use to administer the
+          cluster servers. It must be lowercase. 'admin' is recommended.
+      Type: String
+      Default: admin
+      AllowedPattern: "^[a-z0-9]*$"
+      MinLength: 5
+      ConstraintDescription: Please use at least 5 lowercase characters.
+
+  02oooClusterAdminPassword:
+      Description: >-
+          Please provide a PASSWORD that you will use to administer the
+          cluster servers. It must be lowercase and at least 8 characters,
+          but longer is strongly recommended.
+      Type: String
+      NoEcho: true
+      MinLength: 8
+      ConstraintDescription: Please use at least 8 characters of any sort.
+
+  03oooClusterEncryptionSeed:
+      Description: >-
+          DO NOT LOSE THIS.
+          Please provide either random data or a long passphrase.
+          RECORD THIS ENCRYPTION SEED somewhere safe as it cannot be recovered.
+          This will be used to client-side encrypt data in your Redis cluster
+          and S3 bucket. Minimum 16 characters.
+      Type: String
+      NoEcho: true
+      MinLength: 16
+      ConstraintDescription: Please use at least 16 characters of any sort.
+
+  05oooVPC:
+      Description: >-
+          Please select the VPC that you would like to deploy Userify Enterprise into.
+          Important: this stack is designed for both default VPC and custom VPC
+          accounts, but will not function correctly with classic non-VPC AWS accounts.
+          Please contact support@userify.com for a replacement CloudFormation template.
+
+      Type: 'AWS::EC2::VPC::Id'
+      ConstraintDescription: Please select a valid VPC.
+
+  10oooSubnets:
+      Description: >-
+          Please select the subnets within the VPC above that should be used
+          for the Elastic Load Balancer (ELB) to listen on. Generally these should be
+          public subnets.
+
+      Type: 'List<AWS::EC2::Subnet::Id>'
+      ConstraintDescription: Please select one or more valid subnets.
+
+  15oooClustInstanceType:
+    Description: >-
+      Userify cluster instance sizes. m3.medium or m4.large provide a very
+      balance of power for the unique Userify load, which is heavily biased
+      toward single core performance.
+    Type: String
+    Default: t2.small
+    AllowedValues:
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m3.2ooolarge
+      - m4.large
+      - m4.xlarge
+      - m4.2ooolarge
+      - m4.4ooolarge
+      - m4.10ooolarge
+      - c3.large
+      - c3.xlarge
+      - c3.2ooolarge
+      - c3.4ooolarge
+      - c3.8ooolarge
+      - c4.large
+      - c4.xlarge
+      - c4.2ooolarge
+      - c4.4ooolarge
+      - c4.8ooolarge
+    ConstraintDescription: Please select be a valid EC2 instance type.
+
+  20oooClusterMinSize:
+      Description: >-
+          Please specify the minimum number of nodes that the Userify
+          Enterprise auto-scaling group can scale to. This integer refers to
+          the Userify cluster itself, not the managed nodes.
+          The default, will allow your cluster to be highly available.
+
+      Type: Number
+      Default: '2'
+
+  25oooClusterMaxSize:
+      Description: >-
+
+          Please specify the maximum number of nodes that the Userify
+          Enterprise auto-scaling group can scale to. This integer refers to
+          the Userify cluster itself, not the managed nodes.
+
+      Type: Number
+      Default: '6'
+
+  50oooS3BucketName:
+    Description: >-
+      Userify S3 Bucket Name for primary datastore.
+      Files stored in this bucket are strongly encrypted, so please
+      take note of your crypto seed above.
+    Type: String
+
+  60oooECInstanceType:
+    Description: >-
+      Instance type for the Elasticache cluster used by Userify Enterprise.
+      The default, cache.m3.medium, is recommended for up to 1000 managed instances
+      and is the smallest that can be used in a Replication Group (recommended).
+      Typically, this resource is lightly used even with very fast poll times.
+      Small deployments (<200 instances) may be even fine with t2 class instances.
+    Type: String
+    Default: cache.m3.medium
+    AllowedValues:
+      - cache.t2.micro
+      - cache.t2.small
+      - cache.t2.medium
+      - cache.m3.medium
+      - cache.m3.large
+      - cache.m3.xlarge
+      - cache.m3.2ooolarge
+      - cache.r3.large
+      - cache.r3.xlarge
+      - cache.r3.2ooolarge
+      - cache.r3.4ooolarge
+      - cache.r3.8ooolarge
+    ConstraintDescription: Please select a valid Cache Node type.
+
+  70oooSSHKeyName:
+    Description: >-
+      Name of an existing EC2 KeyPair to enable SSH access to the Userify cluster
+      itself if you need to log in and manage it. You can replace this with
+      the Userify shim in the LC's AMI afterward (even in the same cluster).
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: Please choose the name of an existing EC2 KeyPair.
+
+  80oooSSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+
+Mappings:
+
+  AWSInstanceType2Arch:
+    t2.nano:
+      Arch: HVM64
+    t2.micro:
+      Arch: HVM64
+    t2.small:
+      Arch: HVM64
+    t2.medium:
+      Arch: HVM64
+    t2.large:
+      Arch: HVM64
+    m3.medium:
+      Arch: HVM64
+    m3.large:
+      Arch: HVM64
+    m3.xlarge:
+      Arch: HVM64
+    m3.2ooolarge:
+      Arch: HVM64
+    m4.large:
+      Arch: HVM64
+    m4.xlarge:
+      Arch: HVM64
+    m4.2ooolarge:
+      Arch: HVM64
+    m4.4ooolarge:
+      Arch: HVM64
+    m4.10ooolarge:
+      Arch: HVM64
+    c3.large:
+      Arch: HVM64
+    c3.xlarge:
+      Arch: HVM64
+    c3.2ooolarge:
+      Arch: HVM64
+    c3.4ooolarge:
+      Arch: HVM64
+    c3.8ooolarge:
+      Arch: HVM64
+    c4.large:
+      Arch: HVM64
+    c4.xlarge:
+      Arch: HVM64
+    c4.2ooolarge:
+      Arch: HVM64
+    c4.4ooolarge:
+      Arch: HVM64
+    c4.8ooolarge:
+      Arch: HVM64
+
+  AWSRegionArch2AMI:
+    ap-south-1:
+      HVM64: ami-bc0d40d3
+    us-east-1:
+      HVM64: ami-da05a4a0
+    ap-northeast-1:
+      HVM64: ami-15872773
+    eu-west-1:
+      HVM64: ami-add175d4
+    ap-southeast-1:
+      HVM64: ami-67a6e604
+    ca-central-1:
+      HVM64: ami-8a71c9ee
+    us-west-1:
+      HVM64: ami-1c1d217c
+    eu-central-1:
+      HVM64: ami-97e953f8
+    sa-east-1:
+      HVM64: ami-466b132a
+    ap-southeast-2:
+      HVM64: ami-41c12e23
+    eu-west-2:
+      HVM64: ami-ecbea388
+    ap-northeast-2:
+      HVM64: ami-7b1cb915
+    us-west-2:
+      HVM64: ami-0a00ce72
+    us-east-2:
+      HVM64: ami-336b4456
+
+  Region2Principal:
+    us-east-1:
+      EC2Principal: ec2.amazonaws.com
+    us-west-2:
+      EC2Principal: ec2.amazonaws.com
+    us-west-1:
+      EC2Principal: ec2.amazonaws.com
+    eu-west-1:
+      EC2Principal: ec2.amazonaws.com
+    eu-west-2:
+      EC2Principal: ec2.amazonaws.com
+    ap-southeast-1:
+      EC2Principal: ec2.amazonaws.com
+    ap-northeast-1:
+      EC2Principal: ec2.amazonaws.com
+    ap-northeast-2:
+      EC2Principal: ec2.amazonaws.com
+    ap-southeast-2:
+      EC2Principal: ec2.amazonaws.com
+    ap-south-1:
+      EC2Principal: ec2.amazonaws.com
+    us-east-2:
+      EC2Principal: ec2.amazonaws.com
+    ca-central-1:
+      EC2Principal: ec2.amazonaws.com
+    sa-east-1:
+      EC2Principal: ec2.amazonaws.com
+    cn-north-1:
+      EC2Principal: ec2.amazonaws.com.cn
+    eu-central-1:
+      EC2Principal: ec2.amazonaws.com
+
+  S3RegionMap:
+    us-east-2:
+      S3Region: s3.us-east-2.amazonaws.com
+    us-east-1:
+      S3Region: s3.amazonaws.com
+    us-west-1:
+      S3Region: s3.us-west-1.amazonaws.com
+    us-west-2:
+      S3Region: s3.us-west-2.amazonaws.com
+    ca-central-1:
+      S3Region: s3.ca-central-1.amazonaws.com
+    ap-south-1:
+      S3Region: s3.ap-south-1.amazonaws.com
+    ap-northeast-2:
+      S3Region: s3.ap-northeast-2.amazonaws.com
+    ap-southeast-1:
+      S3Region: s3.ap-southeast-1.amazonaws.com
+    ap-southeast-2:
+      S3Region: s3.ap-southeast-2.amazonaws.com
+    ap-northeast-1:
+      S3Region: s3.ap-northeast-1.amazonaws.com
+    eu-central-1:
+      S3Region: s3-eu-central-1.amazonaws.com
+    eu-west-1:
+      S3Region: s3-eu-west-1.amazonaws.com
+    eu-west-2:
+      S3Region: s3-eu-west-2.amazonaws.com
+    sa-east-1:
+      S3Region: s3-sa-east-1.amazonaws.com 
+
+Resources:
+
+  RedisCluster:
+    Type: 'AWS::ElastiCache::CacheCluster'
+    Properties:
+      CacheNodeType: !Ref 60oooECInstanceType
+      Engine: redis
+      NumCacheNodes: 1
+      CacheSubnetGroupName: !Ref RedisClusterSubnets
+      VpcSecurityGroupIds:
+        - !GetAtt RedisClusterSecurityGroup.GroupId
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 76839c28-65f0-4771-8f66-28fce242c5de
+
+  RedisClusterSubnets:
+    Type: "AWS::ElastiCache::SubnetGroup"
+    Properties:
+      Description: "Subnets for ElastiCache"
+      SubnetIds: !Ref 10oooSubnets
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: ab96b23f-91ea-4091-8d98-bf3e6f4d18c9
+
+  RedisClusterSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable Redis access from VPC only
+      VpcId: !Ref 05oooVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: 0.0.0.0/0
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: b3d9a6c0-c24e-4484-b465-9fb0b40b3ddc
+
+  UserifyServerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable HTTP, HTTPS, and limited SSH access to Userify cluster
+      VpcId: !Ref 05oooVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref 80oooSSHLocation
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: 0.0.0.0/0
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: b4b199d9-f6f4-4bde-a17e-69532308012e
+
+  UserifyServerInstance:
+    Type: 'AWS::AutoScaling::LaunchConfiguration'
+    Properties:
+      AssociatePublicIpAddress: true
+      ImageId: !FindInMap 
+        - AWSRegionArch2AMI
+        - !Ref 'AWS::Region'
+        - !FindInMap 
+          - AWSInstanceType2Arch
+          - !Ref 15oooClustInstanceType
+          - Arch
+      InstanceType: !Ref 15oooClustInstanceType
+      SecurityGroups:
+        - !Ref UserifyServerSecurityGroup
+      KeyName: !Ref 70oooSSHKeyName
+      IamInstanceProfile: !Ref UserifyServerInstanceProfile
+      UserData:
+          Fn::Base64:
+              !Sub
+                - |
+                  #!/bin/bash -xe
+                  touch /etc/userify-defaults.cfg
+                  chmod 600 /etc/userify-defaults.cfg
+                  cat << EOF >> /etc/userify-defaults.cfg
+                  CLUSTER_ADMIN_USERNAME=${01oooClusterAdminUsername}
+                  CLUSTER_ADMIN_PASSWORD=${02oooClusterAdminPassword}
+                  CRYPTOSEED=${03oooClusterEncryptionSeed}
+                  S3_BUCKET=${50oooS3BucketName}
+                  S3_REGION=${AWS::Region}
+                  S3_ENDPOINT=${LocalFindInMapS3Region}
+                  REDIS_HOST=${RedisCluster.RedisEndpoint.Address}
+                  REDIS_PORT=${RedisCluster.RedisEndpoint.Port}
+                  REGION=${AWS::Region}
+                  ELB_NAME=${UserifyELB.DNSName}
+                  EOF
+                  curl -# "https://releases.userify.com/userify-ubuntu-virtenv.tar.gz" | tar -zxC /
+                  sudo /opt/userify-server/pre_configure_ubuntu.sh 2>&1 |sudo tee /var/log/userify-server-initial.log &
+                - 
+                  LocalFindInMapS3Region: !FindInMap [S3RegionMap, !Ref 'AWS::Region', S3Region]
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+    DependsOn:
+      - RedisCluster
+      - UserifyServerInstanceProfile
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 724275f4-a63e-4bba-b5f4-5ce4e7445304
+        
+  UserifyServerRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - !FindInMap 
+                  - Region2Principal
+                  - !Ref 'AWS::Region'
+                  - EC2Principal
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: ade3c46c-f2cf-4750-8ac0-a15f7fac6bcb
+
+  UserifyServerRolePolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: UserifyServerRole
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: elasticache:DescribeCacheClusters
+            Resource: '*'
+          - Sid: AllowRootLevelListingForUserify
+            Action: s3:ListBucket
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${50oooS3BucketName}
+          - Sid: AllowUserToReadWriteForUserify
+            Action:
+              - s3:HeadObject
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${50oooS3BucketName}/*
+      Roles:
+        - !Ref UserifyServerRole
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 32acfbd7-c1c7-49f0-8581-7e15dc12a6c7
+
+  UserifyServerInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref UserifyServerRole
+    DependsOn:
+      - UserifyS3Bucket
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 3df85a97-67f8-44e8-9462-31d7c97dcce3
+
+  UserifyELB:
+    Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
+    Properties:
+      CrossZone: true
+      LoadBalancerName: !Sub ${AWS::StackName}
+      HealthCheck:
+        Target: TCP:443
+        Timeout: 10
+        Interval: 30
+        UnhealthyThreshold: 10
+        HealthyThreshold: 10
+      SecurityGroups:
+        - !Ref UserifyServerSecurityGroup
+      Listeners:
+        - InstancePort: 80
+          LoadBalancerPort: 80
+          InstanceProtocol: HTTP
+          Protocol: HTTP
+        - InstancePort: 443
+          LoadBalancerPort: 443
+          InstanceProtocol: TCP
+          Protocol: TCP
+      Subnets: !Ref 10oooSubnets
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 95c6013c-2b88-427f-94ba-a4c62a6bef3c
+
+  UserifyS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+        BucketName: !Ref 50oooS3BucketName
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 02572f7a-c491-4828-9631-146542ea6fa3
+
+  UserifyASG:
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    Properties:
+      VPCZoneIdentifier: !Ref 10oooSubnets
+      DesiredCapacity: !Ref 20oooClusterMinSize
+      HealthCheckType: ELB
+      HealthCheckGracePeriod: 190
+      MinSize: !Ref 20oooClusterMinSize
+      MaxSize: !Ref 25oooClusterMaxSize
+      LaunchConfigurationName: !Ref UserifyServerInstance
+      LoadBalancerNames: [!Ref UserifyELB]
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 05e02195-889c-4689-aca4-0612aa42d5dd
+
+Outputs:
+
+  UserifyURL:
+    Description: "Now, create your first user!"
+    Value: !Sub 'https://${UserifyELB.DNSName}'
+
+
+Metadata:
+  'AWS::CloudFormation::Designer':
+    b4b199d9-f6f4-4bde-a17e-69532308012e:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 30
+        'y': 160
+      z: 1
+      embeds: []
+    ade3c46c-f2cf-4750-8ac0-a15f7fac6bcb:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: -180
+        'y': 270
+      z: 1
+      embeds: []
+    3df85a97-67f8-44e8-9462-31d7c97dcce3:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: -80
+        'y': 270
+      z: 1
+      embeds: []
+      isassociatedwith:
+        - ade3c46c-f2cf-4750-8ac0-a15f7fac6bcb
+      dependson:
+        - 02572f7a-c491-4828-9631-146542ea6fa3
+    9d260ac7-0283-4953-b0c4-a3091c1ff294:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 200
+        'y': 280
+      z: 1
+      embeds: []
+      isassociatedwith:
+        - b4b199d9-f6f4-4bde-a17e-69532308012e
+      dependson:
+        - 02572f7a-c491-4828-9631-146542ea6fa3
+        - 76839c28-65f0-4771-8f66-28fce242c5de
+        - 3df85a97-67f8-44e8-9462-31d7c97dcce3
+      isrelatedto:
+        - 3df85a97-67f8-44e8-9462-31d7c97dcce3
+    32acfbd7-c1c7-49f0-8581-7e15dc12a6c7:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: -280
+        'y': 270
+      z: 1
+      embeds: []
+      isassociatedwith:
+        - ade3c46c-f2cf-4750-8ac0-a15f7fac6bcb
+    5f81e7a1-0088-42b1-b39a-717104ea4ccc:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 320
+        'y': 180
+      z: 1
+      embeds: []
+    551ded72-afbd-4d83-a99c-1809e2a7a904:
+      source:
+        id: 5f81e7a1-0088-42b1-b39a-717104ea4ccc
+      target:
+        id: b4b199d9-f6f4-4bde-a17e-69532308012e
+      z: 1
+    76839c28-65f0-4771-8f66-28fce242c5de:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 30
+        'y': 390
+      z: 2
+      parent: ab96b23f-91ea-4091-8d98-bf3e6f4d18c9
+      embeds: []
+      isassociatedwith:
+        - 5f81e7a1-0088-42b1-b39a-717104ea4ccc
+        - b3d9a6c0-c24e-4484-b465-9fb0b40b3ddc
+    95c6013c-2b88-427f-94ba-a4c62a6bef3c:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 180
+        'y': 110
+      z: 1
+      embeds: []
+      isassociatedwith:
+        - 9d260ac7-0283-4953-b0c4-a3091c1ff294
+        - b4b199d9-f6f4-4bde-a17e-69532308012e
+    c364bcc2-3638-4ef1-bd50-ee4025434d97:
+      source:
+        id: 95c6013c-2b88-427f-94ba-a4c62a6bef3c
+      target:
+        id: 9d260ac7-0283-4953-b0c4-a3091c1ff294
+      z: 11
+    02572f7a-c491-4828-9631-146542ea6fa3:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: -80
+        'y': 160
+      z: 1
+      embeds: []
+      dependson:
+        - f508f7b8-0523-417d-ad8d-314b91d68ee4
+    f508f7b8-0523-417d-ad8d-314b91d68ee4:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 40
+        'y': 60
+      z: 0
+      embeds: []
+      dependson:
+        - 02572f7a-c491-4828-9631-146542ea6fa3
+    ad531378-29c9-46dc-b2dc-ca0420979e94:
+      source:
+        id: 02572f7a-c491-4828-9631-146542ea6fa3
+      target:
+        id: f508f7b8-0523-417d-ad8d-314b91d68ee4
+      z: 12
+    7ba4a3c5-e1c0-4457-93a0-8ba9dfa0671c:
+      source:
+        id: 3df85a97-67f8-44e8-9462-31d7c97dcce3
+      target:
+        id: 02572f7a-c491-4828-9631-146542ea6fa3
+      z: 13
+    93367ccc-692b-46c7-8be3-e12003704462:
+      source:
+        id: 9d260ac7-0283-4953-b0c4-a3091c1ff294
+      target:
+        id: 02572f7a-c491-4828-9631-146542ea6fa3
+      z: 14
+    ee8b2a07-4f14-4c60-958b-93add29ae33c:
+      source:
+        id: 9d260ac7-0283-4953-b0c4-a3091c1ff294
+      target:
+        id: 76839c28-65f0-4771-8f66-28fce242c5de
+      z: 15
+    cff762ee-acdb-4fc7-b34e-4ee1cbc43dd9:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: -240
+        'y': 390
+      z: 0
+      embeds: []
+    05e02195-889c-4689-aca4-0612aa42d5dd:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 180
+        'y': 210
+      z: 1
+      embeds: []
+      isassociatedwith:
+        - cff762ee-acdb-4fc7-b34e-4ee1cbc43dd9
+        - 95c6013c-2b88-427f-94ba-a4c62a6bef3c
+        - 9d260ac7-0283-4953-b0c4-a3091c1ff294
+        - 724275f4-a63e-4bba-b5f4-5ce4e7445304
+    10556726-c487-4a97-9672-59cda9180d27:
+      source:
+        id: 05e02195-889c-4689-aca4-0612aa42d5dd
+      target:
+        id: cff762ee-acdb-4fc7-b34e-4ee1cbc43dd9
+      z: 16
+    87cbee6d-1c05-4a50-9fed-8b21a4e0c1e4:
+      source:
+        id: 05e02195-889c-4689-aca4-0612aa42d5dd
+      target:
+        id: 95c6013c-2b88-427f-94ba-a4c62a6bef3c
+      z: 17
+    b3d9a6c0-c24e-4484-b465-9fb0b40b3ddc:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: -70
+        'y': 390
+      z: 2
+      parent: ab96b23f-91ea-4091-8d98-bf3e6f4d18c9
+      embeds: []
+    ab96b23f-91ea-4091-8d98-bf3e6f4d18c9:
+      size:
+        width: 220
+        height: 120
+      position:
+        x: -100
+        'y': 360
+      z: 1
+      embeds:
+        - 76839c28-65f0-4771-8f66-28fce242c5de
+        - b3d9a6c0-c24e-4484-b465-9fb0b40b3ddc
+    724275f4-a63e-4bba-b5f4-5ce4e7445304:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 30
+        'y': 270
+      z: 1
+      embeds: []
+      isassociatedwith:
+        - b4b199d9-f6f4-4bde-a17e-69532308012e
+      dependson:
+        - 76839c28-65f0-4771-8f66-28fce242c5de
+        - 3df85a97-67f8-44e8-9462-31d7c97dcce3
+      isrelatedto:
+        - 3df85a97-67f8-44e8-9462-31d7c97dcce3
