@@ -135,7 +135,7 @@ Parameters:
 
   60oooECInstanceType:
     Description: >-
-      US-WEST-2: YOU DO NOT SUPPORT THE cache.m4 INSTANCES (THE DEFAULT). Please
+      US-WEST-2, YOU DO NOT SUPPORT THE cache.m4 INSTANCES (THE DEFAULT). Please
       change this setting.
       Instance type for the Elasticache cluster used by Userify Enterprise.
       The default, cache.m4.large, is recommended for up to 1,500 managed instances
@@ -143,8 +143,8 @@ Parameters:
       Typically, this resource is lightly used even with very fast poll times.
       Small deployments (<200 instances) may be even fine with t2 class instances.
       Cache.m3.medium are recommended for up to 1,000 managed instances.
-      US-East-2 and Canada: You do not support cache.m3 instances.
-      Additional information in a table on this page: http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheNodes.SupportedTypes.html
+      US-East-2 and Canada, You do not support cache.m3 instances.
+      Additional information in a table here, http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheNodes.SupportedTypes.html
     Type: String
     Default: cache.m4.large
     AllowedValues:
@@ -155,6 +155,11 @@ Parameters:
       - cache.m3.large
       - cache.m3.xlarge
       - cache.m3.2xlarge
+      - cache.m4.large
+      - cache.m4.xlarge
+      - cache.m4.2xlarge
+      - cache.m4.4xlarge
+      - cache.m4.10xlarge
       - cache.r3.large
       - cache.r3.xlarge
       - cache.r3.2xlarge
