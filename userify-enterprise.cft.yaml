@@ -34,7 +34,7 @@ Parameters:
   02oooClusterAdminPassword:
       Description: >-
           Please provide a PASSWORD that you will use to administer the
-          cluster servers. It must be lowercase and at least 8 characters,
+          cluster servers. It must be at least 8 characters,
           but longer is strongly recommended.
       Type: String
       NoEcho: true
@@ -112,9 +112,11 @@ Parameters:
           Enterprise auto-scaling group can scale to. This integer refers to
           the Userify cluster itself, not the managed nodes.
           The default, will allow your cluster to be highly available.
-
+          Until you get TLS/SSL configured (see documentation), it's recommended
+          that this stays at one so that you don't have to accept multiple
+          self-signed certificates.
       Type: Number
-      Default: '2'
+      Default: 1
 
   25oooClusterMaxSize:
       Description: >-
