@@ -3,6 +3,8 @@ AWSTemplateFormatVersion: 2010-09-09
 
 Description: >-
 
+  READ ALL DIRECTIONS CAREFULLY.
+
   Welcome to the AWS CloudFormation template for Userify Enterprise. This
   template will create and configure an entire Userify Enterprise cluster. Please
   read the directions carefully and contact support@userify.com if you have
