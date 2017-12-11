@@ -1,27 +1,33 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 
-Description: >-
-
-  READ ALL DIRECTIONS CAREFULLY.
-
-  Welcome to the AWS CloudFormation template for Userify Enterprise. This
-  template will create and configure an entire Userify Enterprise cluster. Please
-  read the directions carefully and contact support@userify.com if you have
-  questions.
-
-  After the stack has completed, you will be able to configure your
-  Userify Enterprise cluster using an easy-to-use web-based dashboard.
-  If you are planning to utilize Active Directory or LDAP, you should
-  click "Server Configuration" and configure it before creating your
-  first user.
-
-  When the stack has completed, the URL of the new stack will be shown
-  under "Outputs". Don't forget to safely record your cluster password
-  and crypto seed.
-
-
 Parameters:
+
+  00oooDirections:
+    Type: String
+    Default: Please read these directions
+    AllowedValues:
+      - Please read these directions
+      - I have read these directions
+    Description: >-
+
+        READ THESE DIRECTIONS CAREFULLY.
+  
+        Welcome to the AWS CloudFormation template for Userify Enterprise. This
+        template will create and configure an entire Userify Enterprise cluster. Please
+        read the directions carefully and contact support@userify.com if you have
+        questions.
+  
+        After the stack has completed, you will be able to configure your
+        Userify Enterprise cluster using an easy-to-use web-based dashboard.
+        If you are planning to utilize Active Directory or LDAP, you should
+        click "Server Configuration" and configure it before creating your
+        first user.
+  
+        When the stack has completed, the URL of the new stack will be shown
+        under "Outputs". Don't forget to safely record your cluster password
+        and crypto seed.
+
 
   01oooClusterAdminUsername:
       Description: >-
