@@ -136,10 +136,11 @@ Parameters:
 
   50oooS3BucketName:
     Description: >-
-      Userify S3 Bucket Name for primary datastore.
-      Files stored in this bucket are strongly encrypted, so please
-      take note of your crypto seed above.
-      Only lowercase, numbers, and hyphens allowed.
+      Userify S3 Bucket Name for primary datastore. Like all S3 bucket names,
+      this must be unique among all AWS customers, so using the name of your
+      company in it is recommended.  Files stored in this bucket are strongly
+      encrypted, so please record your crypto seed above.  Only lowercase,
+      numbers, and hyphens allowed.
     Type: String
     AllowedPattern: "^[a-z0-9-]*$"
     ConstraintDescription: only lowercase, numbers, and hyphens allowed.
