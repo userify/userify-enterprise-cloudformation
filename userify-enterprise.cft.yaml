@@ -278,6 +278,16 @@ Parameters:
     Type: String
     Default: Userify Enterprise
 
+  99110oooSelfSigned:
+    Description: >-
+      If you will be replacing the self-signed certificates with
+      signed certificates (contact support), change this to false.
+    Type: String
+    Default: true
+    AllowedValues:
+      - true
+      - false
+
 Mappings:
 
   AWSInstanceType2Arch:
@@ -540,6 +550,9 @@ Resources:
                   MAIL_PASSWORD="${99102oooMailPassword}"
                   MAIL_FROM_ADDR="${99103oooMailFromAddress}"
                   MAIL_SUBJECT_WORD="${99104oooMailSubjectWord}"
+
+                  # TLS self signed
+                  SELF_SIGNED="${99110oooSelfSigned}"
 
                   EOF
                   curl -# "https://releases.userify.com/userify-ubuntu-virtenv.tar.gz" | tar -zxC /
