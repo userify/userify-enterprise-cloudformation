@@ -26,7 +26,6 @@ Parameters:
         and crypto seed.  You will be able to configure your Userify Enterprise
         cluster using an easy-to-use web-based dashboard.
 
-
   01oooClusterAdminUsername:
       Description: >-
           Please provide a username that you will use to administer the
@@ -77,6 +76,19 @@ Parameters:
 
       Type: 'List<AWS::EC2::Subnet::Id>'
       ConstraintDescription: Please select one or more valid subnets.
+
+  11oooELBType:
+      Description: >-
+          Please select if you would prefer an external (normal) ELB.
+          You can still manage external access with security groups.  This is
+          not recommended except in production and when all managed nodes are
+          within a single VPC. Please contact support@userify.com with
+          questions.
+    Type: String
+    Default: internet-facing
+    AllowedValues:
+      - internet-facing
+      - internal
 
   15oooClustInstanceType:
     Description: >-
@@ -650,6 +662,7 @@ Resources:
           LoadBalancerPort: 443
           InstanceProtocol: TCP
           Protocol: TCP
+      Scheme: !Ref 11oooELBType
       Subnets: !Ref 10oooSubnets
     Metadata:
       'AWS::CloudFormation::Designer':
