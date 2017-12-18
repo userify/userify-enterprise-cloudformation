@@ -217,7 +217,7 @@ Parameters:
       the user's login username (Linux username will be the
       same.) On LDAP, something like uid=USERNAME,DC=corp,DC=example,DC=com
       may be more correct than the example.
-    Default: EXAMPLE\USERNAME
+    Default: CORP\USERNAME
     Type: String
 
   93oooLDAPSearchFilter:
