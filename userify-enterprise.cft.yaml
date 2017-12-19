@@ -78,12 +78,12 @@ Parameters:
       ConstraintDescription: Please select one or more valid subnets.
 
   11oooELBType:
-      Description: >-
-          Please select if you would prefer an external (normal) ELB.
-          You can still manage external access with security groups.  This is
-          not recommended except in production and when all managed nodes are
-          within a single VPC. Please contact support@userify.com with
-          questions.
+    Description: >-
+        Please select if you would prefer an external (normal) ELB.
+        You can still manage external access with security groups.  This is
+        not recommended except in production and when all managed nodes are
+        within a single VPC. Please contact support@userify.com with
+        questions.
     Type: String
     Default: internet-facing
     AllowedValues:
