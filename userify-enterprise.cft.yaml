@@ -220,7 +220,7 @@ Parameters:
   91oooADBaseDN:
     Description: >-
       Optional Active Directory or LDAP base DN. You can change this later.
-    Default: CN=Users,DC=corp,DC=example,DC=com
+    Default: DC=corp,DC=example,DC=com
     Type: String
 
   92oooADUsernameTemplate:
