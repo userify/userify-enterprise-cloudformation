@@ -208,52 +208,53 @@ Parameters:
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
 
-  90oooLDAPHost:
+  90oooADHost:
     Description: >-
       Optional Active Directory or LDAP host URL.
       Recommended format is ldaps://your-active-directory-server.
-      If this is left blank (as the default), other LDAP
-      settings are ignored.
+      If this is left blank (as the default), other AD/LDAP
+      settings are ignored. You should ensure AD/LDAP is configured
+      before logging in the first time. You can change this later.
     Type: String
 
-  91oooLDAPBaseDN:
+  91oooADBaseDN:
     Description: >-
-      Optional Active Directory or LDAP base DN.
-    Default: DC=corp,DC=example,DC=com
+      Optional Active Directory or LDAP base DN. You can change this later.
+    Default: CN=Users,DC=corp,DC=example,DC=com
     Type: String
 
-  92oooLDAPUsernameTemplate:
+  92oooADUsernameTemplate:
     Description: >-
       Optional Active Directory or LDAP username template.
       The uppercase string USERNAME will be replaced with
       the user's login username (Linux username will be the
       same.) On LDAP, something like uid=USERNAME,DC=corp,DC=example,DC=com
-      may be more correct than the example.
+      may be more correct than the example. You can change this later.
     Default: CORP\USERNAME
     Type: String
 
-  93oooLDAPSearchFilter:
+  93oooADSearchFilter:
     Description: >-
       Optional Active Directory or LDAP user search filter.
       The uppercase string USERNAME will be replaced with
-      the user's login username.
+      the user's login username. You can change this later.
       Recommended format for Active Directory is (sAMAccountName=USERNAME)
     Default: (sAMAccountName=USERNAME)
     Type: String
 
-  94oooLDAPSyncUser:
+  94oooADSyncUser:
     Description: >-
       Optional Active Directory or LDAP sync user.
       This is a regular user that can view other user accounts, to verify
       validity and ensure accounts deleted in AD/LDAP are also deleted in
       Userify. Do not grant admin privileges to this AD/LDAP user account as
-      they are not needed.
+      they are not needed. You can change this later.
       Recommended format is simply the username itself.
     Type: String
 
-  95oooLDAPSyncUserPassword:
+  95oooADSyncUserPassword:
     Description: >-
-      Password for the sync user.
+      Password for the sync user. You can change this later.
     Type: String
 
   99100oooMailServer:
@@ -261,7 +262,7 @@ Parameters:
       Optional but recommended Mail Server hostname. If not
       sending through Amazon SES servers, appending port 587 is
       highly recommended to prevent invisible mail dropping or
-      delays.
+      delays. You can change mail settings later.
       Amazon SES example, email-smtp.us-east-1.amazonaws.com:587
       Google example, smtp.gmail.com:587
     Default: email-smtp.us-east-1.amazonaws.com:587
@@ -550,12 +551,12 @@ Resources:
                   ELB_NAME="${UserifyELB.DNSName}"
 
                   # optional AD/LDAP settings from the template:
-                  LDAP_HOST="${90oooLDAPHost}"
-                  LDAP_REALM="${91oooLDAPBaseDN}"
-                  LDAP_SEARCH_FILTER="${93oooLDAPSearchFilter}"
-                  LDAP_USERNAME_TEMPLATE="${92oooLDAPUsernameTemplate}"
-                  LDAP_EMAIL="${94oooLDAPSyncUser}"
-                  LDAP_PASSWORD="${95oooLDAPSyncUserPassword}"
+                  LDAP_HOST="${90oooADHost}"
+                  LDAP_REALM="${91oooADBaseDN}"
+                  LDAP_SEARCH_FILTER="${93oooADSearchFilter}"
+                  LDAP_USERNAME_TEMPLATE="${92oooADUsernameTemplate}"
+                  LDAP_EMAIL="${94oooADSyncUser}"
+                  LDAP_PASSWORD="${95oooADSyncUserPassword}"
         
                   # optional Email settings from the template:
                   MAIL_SERVER="${99100oooMailServer}"
