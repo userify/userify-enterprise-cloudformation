@@ -256,6 +256,7 @@ Parameters:
     Description: >-
       Password for the sync user. You can change this later.
     Type: String
+    NoEcho: true
 
   99100oooMailServer:
     Description: >-
@@ -509,7 +510,6 @@ Resources:
   UserifyServerInstance:
     Type: 'AWS::AutoScaling::LaunchConfiguration'
     Properties:
-      AssociatePublicIpAddress: true
       ImageId: !FindInMap 
         - AWSRegionArch2AMI
         - !Ref 'AWS::Region'
